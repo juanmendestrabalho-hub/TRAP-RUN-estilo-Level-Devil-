@@ -66,19 +66,19 @@ document.addEventListener("keyup", e => {
 
 function startGame() {
 
-  console.log("START CLICADO");
-
   const menu = document.getElementById("menu");
 
   if(menu){
     menu.style.display = "none";
   }
 
+  msg.innerText = "🎮 GO";
+
   if(state.running) return;
 
   state.running = true;
 
-  msg.innerText = "🎮 Jogo iniciado";
+  render();
 
   requestAnimationFrame(loop);
 }
@@ -128,19 +128,56 @@ function move() {
 function physics() {
 
   p.vy += p.gravity;
-  p.y += p.vy;
+  p.y -= p.vy;
 
-  if (p.y >= 40) {
+  let grounded = false;
+
+  const playerLeft = p.x;
+  const playerRight = p.x + 30;
+
+  document.querySelectorAll(".platform").forEach(platform => {
+
+    const rect = platform.getBoundingClientRect();
+
+    const platformLeft = rect.left;
+    const platformRight = rect.right;
+
+    const platformTop =
+      window.innerHeight - rect.top;
+
+    const horizontal =
+      playerRight > platformLeft &&
+      playerLeft < platformRight;
+
+    const touchingTop =
+      p.y <= platformTop &&
+      p.y >= platformTop - 20 &&
+      p.vy < 0;
+
+    if(horizontal && touchingTop){
+
+      p.y = platformTop;
+      p.vy = 0;
+      grounded = true;
+    }
+
+  });
+
+  if(p.y <= 40){
+
     p.y = 40;
     p.vy = 0;
-    p.grounded = true;
+    grounded = true;
+
   }
 
-  if (p.x < 0) p.x = 0;
+  p.grounded = grounded;
+
+  if(p.x < 0) p.x = 0;
 
   const limit = game.clientWidth - 30;
 
-  if (p.x > limit) {
+  if(p.x > limit){
     p.x = limit;
   }
 }
@@ -388,3 +425,13 @@ function spawnParticles(x, y) {
 /* ================= PRIMEIRO RENDER ================= */
 
 render();
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  console.log("ENGINE READY");
+
+  render();
+
+});
