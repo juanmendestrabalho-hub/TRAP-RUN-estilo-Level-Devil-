@@ -1,3 +1,5 @@
+alert("JS carregou");
+
 console.log("SCRIPT CARREGADO");
 
 window.onerror = function(message, source, lineno, colno, error){
