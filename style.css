@@ -68,3 +68,35 @@ h1 {
   position: absolute;
   box-shadow: 0 0 10px red;
 }
+
+
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: Arial;
+  background: black;
+}
+
+/* 🌌 background animado */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, #00f5ff20 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: moveBg 10s linear infinite;
+  opacity: 0.4;
+}
+
+@keyframes moveBg {
+  from { transform: translate(0,0); }
+  to { transform: translate(-100px,-100px); }
+}
+
+/* glow geral */
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
