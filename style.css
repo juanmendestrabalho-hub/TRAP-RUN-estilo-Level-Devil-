@@ -1,0 +1,70 @@
+body {
+  margin: 0;
+  background: #050510;
+  color: white;
+  font-family: Arial;
+  overflow: hidden;
+}
+
+.ui {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+}
+
+h1 {
+  background: linear-gradient(90deg,#00f5ff,#ff00ff);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* GAME AREA */
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* PLAYER */
+#player {
+  width: 30px;
+  height: 30px;
+  background: #00f5ff;
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  box-shadow: 0 0 15px #00f5ff;
+}
+
+/* GOAL */
+#goal {
+  width: 40px;
+  height: 40px;
+  background: #00ff88;
+  position: absolute;
+  right: 40px;
+  bottom: 120px;
+  box-shadow: 0 0 20px #00ff88;
+}
+
+/* PLATFORM */
+.platform {
+  position: absolute;
+  height: 20px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.fake {
+  background: rgba(255,0,0,0.2);
+}
+
+/* SPIKE */
+.spike {
+  width: 20px;
+  height: 20px;
+  background: red;
+  position: absolute;
+  box-shadow: 0 0 10px red;
+}
