@@ -1,4 +1,3 @@
-
 const player = document.getElementById("player");
 const game = document.getElementById("game");
 const msg = document.getElementById("msg");
@@ -6,50 +5,74 @@ const goal = document.getElementById("goal");
 
 let state = {
   running: false,
-  keys: {},
-  mouse: false
+  keys: {}
 };
-
-/* ================= PLAYER STATE ================= */
 
 let p = {
   x: 40,
   y: 40,
-  vx: 0,
   vy: 0,
-  speed: 4,
+  speed: 5,
   gravity: 0.6,
   grounded: true,
-  checkpoint: { x: 40, y: 40 },
-  facing: 1
+  checkpoint: {
+    x: 40,
+    y: 40
+  }
 };
-
-/* ================= ENEMIES ================= */
 
 let enemies = [
   { x: 300, y: 40, dir: 1 },
   { x: 600, y: 40, dir: -1 }
 ];
 
+let jumpPressed = false;
+
 /* ================= INPUT ================= */
 
-document.addEventListener("keydown", e => state.keys[e.key] = true);
-document.addEventListener("keyup", e => state.keys[e.key] = false);
+document.addEventListener("keydown", e => {
 
-document.addEventListener("mousedown", () => state.mouse = true);
-document.addEventListener("mouseup", () => state.mouse = false);
+  state.keys[e.key] = true;
+
+  if (
+    (e.code === "Space" || e.key === " ") &&
+    !jumpPressed &&
+    p.grounded
+  ) {
+    jumpPressed = true;
+    p.vy = -12;
+    p.grounded = false;
+  }
+});
+
+document.addEventListener("keyup", e => {
+
+  state.keys[e.key] = false;
+
+  if (e.code === "Space" || e.key === " ") {
+    jumpPressed = false;
+  }
+});
 
 /* ================= START ================= */
 
 function startGame() {
+
   if (state.running) return;
+
   state.running = true;
-  loop();
+
+  msg.innerText = "🎮 Jogo iniciado";
+
+  requestAnimationFrame(loop);
 }
+
+window.startGame = startGame;
 
 /* ================= LOOP ================= */
 
 function loop() {
+
   if (!state.running) return;
 
   update();
@@ -61,92 +84,61 @@ function loop() {
 /* ================= UPDATE ================= */
 
 function update() {
+
   move();
   physics();
   enemiesAI();
+
   checkCollisions();
-  checkWin();
   checkCheckpoint();
+  checkWin();
 }
 
-/* ================= MOVEMENT ================= */
+/* ================= MOVE ================= */
 
 function move() {
+
   if (state.keys["ArrowLeft"]) {
     p.x -= p.speed;
-    p.facing = -1;
   }
 
   if (state.keys["ArrowRight"]) {
     p.x += p.speed;
-    p.facing = 1;
-  }
-
-  /* JUMP (SÓ SOBE SE ESTIVER NO CHÃO) */
-  if (state.keys[" "] && p.grounded) {
-    p.vy = -12;
-    p.grounded = false;
-  }
-
-  /* DASH SIMPLES COM MOUSE */
-  if (state.mouse) {
-    p.x += 6 * p.facing;
   }
 }
 
 /* ================= PHYSICS ================= */
 
 function physics() {
+
   p.vy += p.gravity;
   p.y += p.vy;
 
-  let onGround = false;
-
-  /* CHÃO BASE */
-  if (p.y <= 40) {
+  if (p.y >= 40) {
     p.y = 40;
     p.vy = 0;
-    onGround = true;
+    p.grounded = true;
   }
 
-  /* PLATAFORMAS */
-  document.querySelectorAll(".platform").forEach(pl => {
-    const r = pl.getBoundingClientRect();
-    const pr = player.getBoundingClientRect();
-
-    const platformY = window.innerHeight - r.bottom;
-
-    const horizontal =
-      pr.x < r.x + r.width &&
-      pr.x + pr.width > r.x;
-
-    const vertical =
-      Math.abs(p.y - platformY) < 10;
-
-    const falling = p.vy >= 0;
-
-    if (horizontal && vertical && falling) {
-      p.y = platformY;
-      p.vy = 0;
-      onGround = true;
-    }
-  });
-
-  p.grounded = onGround;
-
-  /* LIMITES DA TELA */
   if (p.x < 0) p.x = 0;
-  if (p.x > window.innerWidth - 30) p.x = window.innerWidth - 30;
+
+  const limit = game.clientWidth - 30;
+
+  if (p.x > limit) {
+    p.x = limit;
+  }
 }
 
 /* ================= ENEMIES ================= */
 
 function enemiesAI() {
-  enemies.forEach(e => {
-    e.x += e.dir * 2;
 
-    if (e.x > 800 || e.x < 0) {
-      e.dir *= -1;
+  enemies.forEach(enemy => {
+
+    enemy.x += enemy.dir * 2;
+
+    if (enemy.x > 850 || enemy.x < 0) {
+      enemy.dir *= -1;
     }
   });
 }
@@ -154,16 +146,21 @@ function enemiesAI() {
 /* ================= RENDER ================= */
 
 function render() {
+
   player.style.left = p.x + "px";
   player.style.bottom = p.y + "px";
 
-  enemies.forEach((e, i) => {
-    let el = document.getElementById("enemy-" + i);
+  enemies.forEach((enemy, index) => {
+
+    let el = document.getElementById("enemy-" + index);
 
     if (!el) {
+
       el = document.createElement("div");
-      el.id = "enemy-" + i;
+
+      el.id = "enemy-" + index;
       el.className = "enemy";
+
       game.appendChild(el);
     }
 
@@ -171,51 +168,69 @@ function render() {
     el.style.width = "30px";
     el.style.height = "30px";
     el.style.background = "red";
-    el.style.boxShadow = "0 0 10px red";
+    el.style.boxShadow = "0 0 12px red";
 
-    el.style.left = e.x + "px";
-    el.style.bottom = e.y + "px";
+    el.style.left = enemy.x + "px";
+    el.style.bottom = enemy.y + "px";
   });
 }
 
 /* ================= COLLISION ================= */
 
 function isColliding(a, b) {
+
   return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
+    a.left < b.right &&
+    a.right > b.left &&
+    a.top < b.bottom &&
+    a.bottom > b.top
   );
 }
 
 /* ================= COLLISIONS ================= */
 
 function checkCollisions() {
-  const px = player.getBoundingClientRect();
 
-  /* SPIKES */
-  document.querySelectorAll(".spike").forEach(s => {
-    if (isColliding(px, s.getBoundingClientRect())) die();
+  const playerRect = player.getBoundingClientRect();
+
+  document.querySelectorAll(".spike").forEach(spike => {
+
+    if (
+      isColliding(
+        playerRect,
+        spike.getBoundingClientRect()
+      )
+    ) {
+      die();
+    }
   });
 
-  /* ENEMIES */
-  enemies.forEach(e => {
-    const ex = {
-      x: e.x,
-      y: e.y,
-      width: 30,
-      height: 30
-    };
+  document.querySelectorAll(".enemy").forEach(enemy => {
 
-    if (isColliding(px, ex)) die();
+    if (
+      isColliding(
+        playerRect,
+        enemy.getBoundingClientRect()
+      )
+    ) {
+      die();
+    }
   });
 
-  /* FAKE PLATFORM */
-  document.querySelectorAll(".fake").forEach(f => {
-    if (isColliding(px, f.getBoundingClientRect())) {
-      f.style.opacity = 0;
-      setTimeout(() => die(), 150);
+  document.querySelectorAll(".fake").forEach(fake => {
+
+    if (
+      isColliding(
+        playerRect,
+        fake.getBoundingClientRect()
+      )
+    ) {
+
+      fake.style.opacity = "0";
+
+      setTimeout(() => {
+        die();
+      }, 150);
     }
   });
 }
@@ -223,11 +238,28 @@ function checkCollisions() {
 /* ================= CHECKPOINT ================= */
 
 function checkCheckpoint() {
-  document.querySelectorAll(".checkpoint").forEach(c => {
-    if (isColliding(player.getBoundingClientRect(), c.getBoundingClientRect())) {
-      p.checkpoint = { x: p.x, y: p.y };
-      msg.innerText = "💾 checkpoint salvo";
-      setTimeout(() => msg.innerText = "", 800);
+
+  const playerRect = player.getBoundingClientRect();
+
+  document.querySelectorAll(".checkpoint").forEach(cp => {
+
+    if (
+      isColliding(
+        playerRect,
+        cp.getBoundingClientRect()
+      )
+    ) {
+
+      p.checkpoint = {
+        x: p.x,
+        y: p.y
+      };
+
+      msg.innerText = "💾 Checkpoint salvo";
+
+      setTimeout(() => {
+        msg.innerText = "";
+      }, 1000);
     }
   });
 }
@@ -235,72 +267,108 @@ function checkCheckpoint() {
 /* ================= WIN ================= */
 
 function checkWin() {
-  if (isColliding(player.getBoundingClientRect(), goal.getBoundingClientRect())) {
-    msg.innerText = "🏆 venceu!";
-    setTimeout(() => respawn(), 800);
+
+  if (
+    isColliding(
+      player.getBoundingClientRect(),
+      goal.getBoundingClientRect()
+    )
+  ) {
+
+    msg.innerText = "🏆 VOCÊ VENCEU!";
+
+    setTimeout(() => {
+      respawn();
+    }, 1200);
   }
 }
 
 /* ================= DEATH ================= */
 
 function die() {
+
   const r = player.getBoundingClientRect();
 
-  spawnParticles(r.left, window.innerHeight - r.bottom);
+  spawnParticles(
+    r.left,
+    window.innerHeight - r.bottom
+  );
 
-  msg.innerText = "💀 morreu";
+  msg.innerText = "💀 Você morreu";
+
+  state.running = false;
 
   setTimeout(() => {
+
     respawn();
-  }, 600);
+
+    state.running = true;
+
+    requestAnimationFrame(loop);
+
+  }, 800);
 }
 
 /* ================= RESPAWN ================= */
 
 function respawn() {
+
   p.x = p.checkpoint.x;
   p.y = p.checkpoint.y;
   p.vy = 0;
   p.grounded = true;
+
+  msg.innerText = "";
 }
 
 /* ================= PARTICLES ================= */
 
 function spawnParticles(x, y) {
-  for (let i = 0; i < 12; i++) {
-    const d = document.createElement("div");
 
-    d.style.position = "absolute";
-    d.style.width = "6px";
-    d.style.height = "6px";
-    d.style.background = "#ff0055";
-    d.style.left = x + "px";
-    d.style.bottom = y + "px";
-    d.style.borderRadius = "50%";
+  for (let i = 0; i < 15; i++) {
 
-    document.body.appendChild(d);
+    const particle = document.createElement("div");
 
-    const a = Math.random() * Math.PI * 2;
-    const s = Math.random() * 6;
+    particle.style.position = "absolute";
+    particle.style.width = "6px";
+    particle.style.height = "6px";
+    particle.style.borderRadius = "50%";
+    particle.style.background = "#ff0055";
 
-    let vx = Math.cos(a) * s;
-    let vy = Math.sin(a) * s;
+    particle.style.left = x + "px";
+    particle.style.bottom = y + "px";
+
+    document.body.appendChild(particle);
+
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 8;
+
+    let vx = Math.cos(angle) * speed;
+    let vy = Math.sin(angle) * speed;
 
     let px = x;
     let py = y;
 
-    const loop = setInterval(() => {
+    const timer = setInterval(() => {
+
       px += vx;
       py += vy;
+
       vy -= 0.25;
 
-      d.style.left = px + "px";
-      d.style.bottom = py + "px";
+      particle.style.left = px + "px";
+      particle.style.bottom = py + "px";
 
       if (py < 0) {
-        d.remove();
-        clearInterval(loop);
+
+        particle.remove();
+        clearInterval(timer);
       }
+
     }, 16);
   }
 }
+
+/* ================= PRIMEIRO RENDER ================= */
+
+render();
