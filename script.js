@@ -1,3 +1,9 @@
+console.log("SCRIPT CARREGADO");
+
+window.onerror = function(message, source, lineno, colno, error){
+  console.error("ERRO GLOBAL:", message);
+};
+
 const player = document.getElementById("player");
 const game = document.getElementById("game");
 const msg = document.getElementById("msg");
@@ -58,7 +64,15 @@ document.addEventListener("keyup", e => {
 
 function startGame() {
 
-  if (state.running) return;
+  console.log("START CLICADO");
+
+  const menu = document.getElementById("menu");
+
+  if(menu){
+    menu.style.display = "none";
+  }
+
+  if(state.running) return;
 
   state.running = true;
 
