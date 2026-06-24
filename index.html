@@ -10,15 +10,17 @@
 
 <body>
 
+  <!-- MENU (OBRIGATÓRIO PARA ENGINE) -->
   <div class="menu" id="menu">
-  <h1>NEON TRAP ENGINE</h1>
-  <p>press START to enter simulation</p>
-  <button onclick="startGame()">START</button>
+    <h1>NEON TRAP ENGINE</h1>
+    <p>press START to enter simulation</p>
+    <button onclick="startGame()">START</button>
+  </div>
 
-      <div id="msg"></div>
-    
-</div>
-
+  <!-- UI -->
+  <div class="ui">
+    <div id="msg"></div>
+  </div>
 
   <!-- GAME AREA -->
   <div id="game">
@@ -29,25 +31,22 @@
     <!-- GOAL -->
     <div id="goal"></div>
 
-    <!-- CHECKPOINTS -->
+    <!-- CHECKPOINT -->
     <div class="checkpoint" style="left: 350px; bottom: 40px;"></div>
 
     <!-- PLATFORMS -->
     <div class="platform" style="left:0; bottom:0; width:100%"></div>
-
     <div class="platform" style="left:150px; bottom:120px; width:120px"></div>
-
     <div class="platform fake" style="left:320px; bottom:200px; width:120px"></div>
-
     <div class="platform" style="left:500px; bottom:80px; width:150px"></div>
 
     <!-- SPIKES -->
     <div class="spike" style="left:200px; bottom:0;"></div>
 
-    <!-- FUTURO: CONTAINER DE INIMIGOS (JS usa array, mas ajuda organização) -->
+    <!-- ENEMIES (JS RENDER) -->
     <div id="enemies"></div>
 
-    <!-- FUTURO: OVERLAY (efeitos de morte / transição) -->
+    <!-- OVERLAY FUTURO -->
     <div id="overlay"></div>
 
   </div>
