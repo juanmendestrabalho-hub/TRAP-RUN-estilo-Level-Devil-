@@ -1,11 +1,31 @@
+
 body {
   margin: 0;
+  overflow: hidden;
+  font-family: Arial;
   background: #050510;
   color: white;
-  font-family: Arial;
-  overflow: hidden;
 }
 
+/* 🌌 BACKGROUND ANIMADO */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, #00f5ff20 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: moveBg 10s linear infinite;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+@keyframes moveBg {
+  from { transform: translate(0,0); }
+  to { transform: translate(-100px,-100px); }
+}
+
+/* ================= UI ================= */
 .ui {
   position: absolute;
   width: 100%;
@@ -19,14 +39,15 @@ h1 {
   color: transparent;
 }
 
-/* GAME AREA */
+/* ================= GAME AREA ================= */
 #game {
   position: relative;
   width: 100vw;
   height: 100vh;
+  z-index: 1;
 }
 
-/* PLAYER */
+/* ================= PLAYER ================= */
 #player {
   width: 30px;
   height: 30px;
@@ -35,9 +56,10 @@ h1 {
   bottom: 40px;
   left: 40px;
   box-shadow: 0 0 15px #00f5ff;
+  z-index: 5;
 }
 
-/* GOAL */
+/* ================= GOAL ================= */
 #goal {
   width: 40px;
   height: 40px;
@@ -46,57 +68,38 @@ h1 {
   right: 40px;
   bottom: 120px;
   box-shadow: 0 0 20px #00ff88;
+  z-index: 5;
 }
 
-/* PLATFORM */
+/* ================= PLATFORM ================= */
 .platform {
   position: absolute;
   height: 20px;
   background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.2);
+  z-index: 3;
 }
 
 .fake {
   background: rgba(255,0,0,0.2);
 }
 
-/* SPIKE */
+/* ================= SPIKE ================= */
 .spike {
   width: 20px;
   height: 20px;
   background: red;
   position: absolute;
   box-shadow: 0 0 10px red;
+  z-index: 4;
 }
 
-
-body {
-  margin: 0;
-  overflow: hidden;
-  font-family: Arial;
-  background: black;
-}
-
-/* 🌌 background animado */
-body::before {
-  content: "";
-  position: fixed;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, #00f5ff20 1px, transparent 1px);
-  background-size: 40px 40px;
-  animation: moveBg 10s linear infinite;
-  opacity: 0.4;
-}
-
-@keyframes moveBg {
-  from { transform: translate(0,0); }
-  to { transform: translate(-100px,-100px); }
-}
-
-/* glow geral */
-#game {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
+/* ================= CHECKPOINT ================= */
+.checkpoint {
+  width: 20px;
+  height: 20px;
+  background: #ffcc00;
+  position: absolute;
+  box-shadow: 0 0 10px #ffcc00;
+  z-index: 4;
 }
