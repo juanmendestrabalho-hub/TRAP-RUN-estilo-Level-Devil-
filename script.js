@@ -1,134 +1,143 @@
 
-const player = document.getElementById("player");
+/* ================= ENGINE CORE ================= */
+
 const game = document.getElementById("game");
-const msg = document.getElementById("msg");
+const player = document.getElementById("player");
 const goal = document.getElementById("goal");
+const msg = document.getElementById("msg");
 
-let x = 40;
-let y = 40;
-let vy = 0;
+let state = {
+  running: false,
+  level: 1,
+  keys: {},
+};
 
-let gravity = 0.6;
-let jumping = false;
+/* ================= PLAYER ================= */
 
-let keys = {};
-let running = false;
+let playerState = {
+  x: 40,
+  y: 40,
+  vy: 0,
+  speed: 4,
+  gravity: 0.6,
+  jumping: false,
+  facing: 1,
+  checkpoint: { x: 40, y: 40 }
+};
 
-/* ================= NEW SYSTEMS ================= */
-
-let dashCooldown = 0;
-let dashPower = 18;
-let facing = 1;
-
-let checkpoint = { x: 40, y: 40 };
+/* ================= WORLD ================= */
 
 let enemies = [
   { x: 300, y: 40, dir: 1 },
   { x: 600, y: 40, dir: -1 }
 ];
 
-/* INPUT */
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
+/* ================= INPUT ================= */
 
-/* ================= START ================= */
+document.addEventListener("keydown", (e) => {
+  state.keys[e.key] = true;
+});
+
+document.addEventListener("keyup", (e) => {
+  state.keys[e.key] = false;
+});
+
+/* ================= START (SAFE LOOP) ================= */
+
 function startGame() {
-  x = checkpoint.x;
-  y = checkpoint.y;
-  vy = 0;
-  msg.innerText = "";
+  if (state.running) return; // 🚨 evita múltiplos loops
 
-  if (!running) {
-    running = true;
-    loop();
-  }
+  state.running = true;
+  loop();
 }
 
-/* ================= LOOP ================= */
+/* ================= MAIN LOOP ================= */
+
 function loop() {
-  if (!running) return;
+  if (!state.running) return;
 
-  move();
-  physics();
-  enemiesAI();
-  checkDeath();
-  checkWin();
-  checkCheckpoint();
-
-  renderEnemies();
+  update();
+  render();
 
   requestAnimationFrame(loop);
 }
 
-/* ================= MOVEMENT ================= */
-function move() {
+/* ================= UPDATE ================= */
 
-  if (keys["ArrowLeft"]) {
-    x -= 4;
-    facing = -1;
+function update() {
+  movePlayer();
+  applyPhysics();
+  updateEnemies();
+  checkCollisions();
+  checkWin();
+  checkCheckpoint();
+}
+
+/* ================= PLAYER MOVEMENT ================= */
+
+function movePlayer() {
+  if (state.keys["ArrowLeft"]) {
+    playerState.x -= playerState.speed;
+    playerState.facing = -1;
   }
 
-  if (keys["ArrowRight"]) {
-    x += 4;
-    facing = 1;
+  if (state.keys["ArrowRight"]) {
+    playerState.x += playerState.speed;
+    playerState.facing = 1;
   }
 
-  /* JUMP */
-  if (keys[" "] && !jumping) {
-    vy = -10;
-    jumping = true;
+  if (state.keys[" "] && !playerState.jumping) {
+    playerState.vy = -10;
+    playerState.jumping = true;
   }
 
-  /* DASH */
-  if (keys["Shift"] && dashCooldown <= 0) {
-    x += dashPower * facing;
-    dashCooldown = 40;
+  if (state.keys["Shift"] && playerState.dashCooldown <= 0) {
+    playerState.x += 18 * playerState.facing;
+    playerState.dashCooldown = 30;
   }
 
-  dashCooldown--;
-
-  player.style.left = x + "px";
+  if (playerState.dashCooldown > 0) {
+    playerState.dashCooldown--;
+  }
 }
 
 /* ================= PHYSICS ================= */
-function physics() {
-  vy += gravity;
-  y += vy;
 
-  if (y > 40) {
-    y = 40;
-    vy = 0;
-    jumping = false;
+function applyPhysics() {
+  playerState.vy += playerState.gravity;
+  playerState.y += playerState.vy;
+
+  if (playerState.y > 40) {
+    playerState.y = 40;
+    playerState.vy = 0;
+    playerState.jumping = false;
   }
-
-  player.style.bottom = y + "px";
 }
 
-/* ================= WALL JUMP ================= */
-function wallJumpCheck() {
-  const platforms = document.querySelectorAll(".platform");
+/* ================= RENDER ================= */
 
-  let touchingWall = false;
+function render() {
+  player.style.left = playerState.x + "px";
+  player.style.bottom = playerState.y + "px";
 
-  platforms.forEach(p => {
-    const r = p.getBoundingClientRect();
-    const px = player.getBoundingClientRect();
+  enemies.forEach((e, i) => {
+    let el = document.getElementById("enemy-" + i);
 
-    if (
-      px.y < r.y + r.height &&
-      px.y + px.height > r.y &&
-      Math.abs(px.right - r.left) < 10
-    ) {
-      touchingWall = true;
-      facing *= -1;
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "enemy-" + i;
+      el.className = "enemy";
+      game.appendChild(el);
     }
-  });
 
-  return touchingWall;
+    el.style.left = e.x + "px";
+    el.style.bottom = e.y + "px";
+  });
 }
 
 /* ================= ENEMIES ================= */
-function enemiesAI() {
+
+function updateEnemies() {
   enemies.forEach(e => {
     e.x += e.dir * 2;
 
@@ -138,54 +147,17 @@ function enemiesAI() {
   });
 }
 
-/* ================= RENDER ENEMIES ================= */
-function renderEnemies() {
+/* ================= COLLISIONS ================= */
 
-  document.querySelectorAll(".enemy").forEach(e => e.remove());
+function checkCollisions() {
+  const p = player.getBoundingClientRect();
 
-  enemies.forEach(e => {
-    const div = document.createElement("div");
-
-    div.className = "enemy";
-    div.style.position = "absolute";
-    div.style.width = "30px";
-    div.style.height = "30px";
-    div.style.background = "red";
-    div.style.left = e.x + "px";
-    div.style.bottom = e.y + "px";
-    div.style.boxShadow = "0 0 15px red";
-
-    game.appendChild(div);
-  });
-}
-
-/* ================= CHECKPOINT ================= */
-function checkCheckpoint() {
-  document.querySelectorAll(".checkpoint").forEach(c => {
-    const r = c.getBoundingClientRect();
-    const px = player.getBoundingClientRect();
-
-    if (isColliding(px, r)) {
-      checkpoint = { x, y };
-      msg.innerText = "💾 Checkpoint salvo!";
-      setTimeout(() => msg.innerText = "", 800);
+  document.querySelectorAll(".spike").forEach(s => {
+    if (isColliding(p, s.getBoundingClientRect())) {
+      die();
     }
   });
-}
 
-/* ================= DEATH ================= */
-function checkDeath() {
-
-  const px = player.getBoundingClientRect();
-
-  /* spikes */
-  document.querySelectorAll(".spike").forEach(spike => {
-    const s = spike.getBoundingClientRect();
-
-    if (isColliding(px, s)) die();
-  });
-
-  /* enemies */
   enemies.forEach(e => {
     const ex = {
       x: e.x,
@@ -194,22 +166,71 @@ function checkDeath() {
       height: 30
     };
 
-    if (isColliding(px, ex)) die();
+    if (isColliding(p, ex)) {
+      die();
+    }
+  });
+
+  document.querySelectorAll(".fake").forEach(f => {
+    if (isColliding(p, f.getBoundingClientRect())) {
+      f.style.opacity = 0;
+      setTimeout(() => die(), 150);
+    }
+  });
+}
+
+/* ================= CHECKPOINT ================= */
+
+function checkCheckpoint() {
+  document.querySelectorAll(".checkpoint").forEach(c => {
+    if (isColliding(player.getBoundingClientRect(), c.getBoundingClientRect())) {
+      playerState.checkpoint = {
+        x: playerState.x,
+        y: playerState.y
+      };
+
+      msg.innerText = "💾 checkpoint salvo";
+
+      setTimeout(() => msg.innerText = "", 800);
+    }
   });
 }
 
 /* ================= WIN ================= */
-function checkWin() {
-  const px = player.getBoundingClientRect();
-  const g = goal.getBoundingClientRect();
 
-  if (isColliding(px, g)) {
-    msg.innerText = "🏆 Fase completa!";
-    setTimeout(() => startGame(), 1000);
+function checkWin() {
+  if (isColliding(player.getBoundingClientRect(), goal.getBoundingClientRect())) {
+    msg.innerText = "🏆 fase concluída";
+
+    setTimeout(() => {
+      respawn();
+    }, 800);
   }
 }
 
+/* ================= DEATH ================= */
+
+function die() {
+  msg.innerText = "💀 morreu";
+
+  const rect = player.getBoundingClientRect();
+  spawnParticles(rect.left, window.innerHeight - rect.bottom);
+
+  setTimeout(() => {
+    respawn();
+  }, 600);
+}
+
+/* ================= RESPAWN ================= */
+
+function respawn() {
+  playerState.x = playerState.checkpoint.x;
+  playerState.y = playerState.checkpoint.y;
+  playerState.vy = 0;
+}
+
 /* ================= COLLISION ================= */
+
 function isColliding(a, b) {
   return (
     a.x < b.x + b.width &&
@@ -219,32 +240,18 @@ function isColliding(a, b) {
   );
 }
 
-/* ================= DEATH ================= */
-function die() {
-  const rect = player.getBoundingClientRect();
-
-  spawnParticles(rect.left, window.innerHeight - rect.bottom);
-
-  msg.innerText = "💀 Você morreu";
-
-  setTimeout(() => {
-    x = checkpoint.x;
-    y = checkpoint.y;
-    vy = 0;
-  }, 600);
-}
-
 /* ================= PARTICLES ================= */
-function spawnParticles(px, py) {
-  for (let i = 0; i < 16; i++) {
+
+function spawnParticles(x, y) {
+  for (let i = 0; i < 14; i++) {
     const p = document.createElement("div");
 
     p.style.position = "absolute";
     p.style.width = "6px";
     p.style.height = "6px";
     p.style.background = "#ff0055";
-    p.style.left = px + "px";
-    p.style.bottom = py + "px";
+    p.style.left = x + "px";
+    p.style.bottom = y + "px";
     p.style.borderRadius = "50%";
 
     document.body.appendChild(p);
@@ -253,20 +260,20 @@ function spawnParticles(px, py) {
     const speed = Math.random() * 6;
 
     let vx = Math.cos(angle) * speed;
-    let vyLocal = Math.sin(angle) * speed;
+    let vy = Math.sin(angle) * speed;
 
-    let posX = px;
-    let posY = py;
+    let px = x;
+    let py = y;
 
     const interval = setInterval(() => {
-      posX += vx;
-      posY += vyLocal;
-      vyLocal -= 0.25;
+      px += vx;
+      py += vy;
+      vy -= 0.25;
 
-      p.style.left = posX + "px";
-      p.style.bottom = posY + "px";
+      p.style.left = px + "px";
+      p.style.bottom = py + "px";
 
-      if (posY < 0) {
+      if (py < 0) {
         p.remove();
         clearInterval(interval);
       }
